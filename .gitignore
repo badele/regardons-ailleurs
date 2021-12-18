@@ -1,0 +1,11 @@
+/resources/_gen/
+/inprogress/
+.hugo_build.lock
+
+# R
+renv
+.RData
+.Rproj.user
+.Rhistory
+Rplots*
+.Rprofile

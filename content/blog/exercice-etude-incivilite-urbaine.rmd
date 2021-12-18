@@ -1,0 +1,706 @@
+---
+title: "Exercice d'étude des incivilités urbaines"
+author: "Bruno Adelé"
+date: 2021-11-28T14:46:10+06:00
+description: "Etude des incivilités en ville"
+type: "post"
+image: "/images/blog/exercice-etude-incivilite-urbaine/main-image.png"
+categories: 
+  - "Pays"
+tags:
+  - "Analyse"
+  - "Urbanisme"
+output: 
+    md_document:
+      preserve_yaml: true
+      fig_caption: yes
+---
+
+``` {r echo=FALSE, message=FALSE,INCLUDE=FALSE}
+
+source("../../lib/R/file.R")
+source("../../lib/R/image.R")
+
+
+suppressPackageStartupMessages({
+  library(here)
+  library(magick)
+  library(scales)
+  library(ggrepel)
+  library(R.cache)
+  library(RSQLite)
+  library(forcats)
+  library(treemap)
+  library(ggplot2)
+  library(ggthemes)
+  library(ggfittext)
+  library(tidyverse) 
+  library(paletteer)
+  library(lubridate)
+  library(treemapify)
+  library(kableExtra)
+  library(khroma)
+
+})
+
+# Variables
+minpercentcat <- 0.02
+minobs <- 100
+
+scriptdir <- here()
+sourcedata <- "vigilo"
+pagename <- "exercice-etude-incivilite-urbaine"
+imagedir <- paste0(scriptdir,"/static")
+logopath <- paste0(scriptdir,"/sources/logo-2.png")
+
+# Cr&e le repertoire des images
+dir.create(paste0(imagedir,"/images/blog/",pagename),recursive=TRUE, showWarnings = FALSE)
+
+##############################################################################
+# Récupération des données
+##############################################################################
+
+clearCache()
+
+categories <- evalWithMemoization({
+  #read_fwf("https://raw.githubusercontent.com/badele/world-datas-analysis/master/dataset/vigilo/categories.txt")
+  read_fwf("../../../world-datas-analysis/dataset/vigilo/categories.txt")
+})
+
+instances <- evalWithMemoization({
+  #read_fwf("https://raw.githubusercontent.com/badele/world-datas-analysis/master/dataset/vigilo/instances.txt")
+  read_fwf("../../../world-datas-analysis/dataset/vigilo/instances.txt")
+})
+
+observations <- evalWithMemoization({
+  #read_fwf("https://raw.githubusercontent.com/badele/world-datas-analysis/master/dataset/vigilo/observations.txt")
+  read_fwf("../../../world-datas-analysis/dataset/vigilo/observations.txt")
+})
+
+# Filtre les observations
+filteredobs <- evalWithMemoization({
+  observations %>%
+  inner_join(instances) %>%
+  inner_join(categories) %>%
+  filter(approved == 1,catdisable==0) %>%
+  select(
+    datetime,instancename, cityname,catname
+  ) %>%
+  mutate(
+    across(c(instancename, cityname, catname),as.factor),
+    datetime = as_date(datetime)
+  ) 
+})
+
+##############################################################################
+# Aggrégation des données
+##############################################################################
+
+instanceinfo <- filteredobs %>%
+  mutate(
+    instancename = fct_lump_min(instancename,other_level="[ Autres instances ]",min=minobs),
+    instancename = fct_relevel(instancename, "[ Autres instances ]", after=Inf)
+  ) %>%
+  group_by(instancename) %>%
+  summarise(
+    nbvilles = n_distinct(cityname),
+    totalobs=n(),
+    mindateobs = min(datetime),
+    maxdateobs = max(datetime),
+    ) 
+
+# Calcul le classement des categories par % 
+topcategory <- filteredobs %>%
+  mutate(
+    catname =  fct_lump(catname,other_level="[ Autre ]",prop=minpercentcat),
+  ) %>%
+  group_by(catname) %>%
+  summarise(
+    nb=n()
+    ) %>%
+  mutate(
+    percent=nb/sum(nb),
+    catname = fct_reorder(catname, percent, .desc=FALSE)
+    ) %>%
+  arrange(desc(percent))
+
+lastdate <- max(instanceinfo$maxdateobs) 
+textlastdate <- format(lastdate,"%d %B %Y")
+```
+
+### Comment mesurer l'incivilité urbaine
+
+Suite à un mouvement cycliste sur Montpellier, [Quentin Hess](https://twitter.com/kentiss34) a dévélopé l'application [Vigilo](https://vigilo.city/fr/). Celle ci permet d'apporter des observations sur les villes en tant que piéton ou cycliste. 
+
+> **NOTE**: Les categories inferieures à **`r percent(minpercentcat,0.1)`** sont groupées dans **Autre** 
+
+Au **`r textlastdate`** le panel est composé de **`r sum(instanceinfo$nbvilles)`** villes réparties sur **`r nrow(instances)`** instances. ce panel comprend **`r sum(instanceinfo$totalobs)`** observations.
+
+#### Les villes du panel
+
+``` {r echo=FALSE, message=FALSE, include=FALSE}
+
+##############################################################################
+# Date Premiere observation
+##############################################################################
+
+title <- "Les observations Vigilo"
+subtitle <- paste("Historique des observations au",textlastdate)
+pal <- paletteer_d("ggsci::nrc_npg",n=3,direction=-1,type="discrete")
+g <- instanceinfo %>%
+mutate(
+  instancename = fct_reorder(instancename,mindateobs,min,.desc=TRUE)
+) %>%
+ggplot() +
+  geom_segment( aes(x=instancename, xend=instancename, y=mindateobs, yend=maxdateobs), color=pal[1]) +
+  geom_point( aes(x=instancename, y=mindateobs), color=pal[2], size=2 ) +
+  geom_point( aes(x=instancename, y=maxdateobs), color=pal[3], size=2 ) +
+  coord_flip() +
+  scale_y_date(date_labels="%Y", breaks = "2 years", minor_breaks = NULL) +
+
+  labs(x = "Instances",
+       y = "Date observations",
+       title = title, 
+       subtitle = subtitle,
+       caption = paste0("regardons ailleurs | Data: ",sourcedata)
+       ) +
+  theme_minimal() +
+  theme(
+        plot.background = element_rect(
+          fill = "#141622",
+          colour="#141622"
+        ),
+        panel.background = element_rect(
+          fill = "#141622", 
+          colour = "#141622",
+          size = 2, 
+          linetype = "solid"
+        ),
+        plot.title = element_text(
+          face = "bold", 
+          colour = "white", 
+          size = 18, 
+        ),
+        plot.subtitle = element_text(
+          colour = "gray", 
+          size = 14
+        ),
+        panel.grid = element_line(
+          size = 0.5, 
+          linetype = 'solid',
+          colour = "#FFFFFF10"
+        ),
+        axis.title.x = element_text(
+          size = 12, 
+          colour = "white",
+        ), 
+        axis.title.y = element_text(
+          size = 12, 
+          colour = "white",
+        ), 
+        axis.text.x = element_text(
+          colour = "gray"
+        ),
+        axis.text.y = element_text(
+          colour = "white"
+        ),
+        plot.caption = element_text(
+          colour = "gray", 
+          size = 14
+        ),
+        plot.caption.position = "plot",
+        legend.position = "none",
+        legend.title = element_text(
+          colour = "white", 
+          size = 14
+        ),
+        legend.text = element_text(
+          colour = "white", 
+          size = 10
+        )
+  )
+
+# Normal
+ggsave(filename = "/tmp/instance_creation.png",g, width = 10, height = 5, dpi = 96, units = "in", device='png')
+plot_with_logo <- add_logo(
+  plot_path = "/tmp/instance_creation.png", 
+  logo_path =  logopath,
+  logo_position = "bottom left", 
+  logo_scale = 17
+)
+magick::image_write(plot_with_logo, paste0(imagedir,"/images/blog/exercice-etude-incivilite-urbaine/instance_creation.png")) 
+
+# Zoomed
+ggsave(filename = "/tmp/instance_creation_zoom.png",g, width = 20, height = 10, dpi = 96, units = "in", device='png')
+plot_with_logo <- add_logo(
+  plot_path = "/tmp/instance_creation_zoom.png", 
+  logo_path =  logopath,
+  logo_position = "bottom left", 
+  logo_scale = 17
+)
+magick::image_write(plot_with_logo, paste0(imagedir,"/images/blog/exercice-etude-incivilite-urbaine/instance_creation_zoom.png")) 
+
+##############################################################################
+# Total
+##############################################################################
+
+# Plot
+title <- "Les observations Vigilo"
+subtitle <- paste("Nombre d'observations pour chaque ville au",textlastdate)
+pal <- paletteer_d("ggsci::nrc_npg",n=3,direction=-1,type="discrete")
+g <- instanceinfo %>%
+  mutate (
+    instancename=fct_reorder(instancename,totalobs,min,.desc=FALSE)
+  ) %>%
+  ggplot( aes(x=instancename, y=totalobs)) +
+  geom_bar(stat='identity',fill=pal[1]) +
+  coord_flip() +
+  labs(x = "",
+       y = "Nb observations", 
+       title = title, 
+       subtitle = subtitle,
+       caption = paste0("regardons ailleurs | Data: ",sourcedata)) +
+  scale_y_continuous(sec.axis = dup_axis(name="")) +
+
+  theme_minimal() +
+  theme(
+        plot.background = element_rect(
+          fill = "#141622",
+          colour="#141622"
+        ),
+        panel.background = element_rect(
+          fill = "#141622", 
+          colour = "#141622",
+          size = 2, 
+          linetype = "solid"
+        ),
+        plot.title = element_text(
+          face = "bold", 
+          colour = "white", 
+          size = 18, 
+        ),
+        plot.subtitle = element_text(
+          colour = "gray", 
+          size = 14
+        ),
+        panel.grid = element_line(
+          size = 0.5, 
+          linetype = 'solid',
+          colour = "#FFFFFF10"
+        ),
+        axis.title.x = element_text(
+          size = 12, 
+          colour = "white",
+        ), 
+        axis.title.y = element_text(
+          size = 12, 
+          colour = "white",
+        ), 
+        axis.text.x = element_text(
+          colour = "gray"
+        ),
+        axis.text.y = element_text(
+          colour = "white"
+        ),
+        plot.caption = element_text(
+          colour = "gray", 
+          size = 14
+        ),
+        plot.caption.position = "plot",
+        legend.position = "none",
+        legend.title = element_text(
+          colour = "white", 
+          size = 14
+        ),
+        legend.text = element_text(
+          colour = "white", 
+          size = 10
+        )
+  )
+
+# Normal
+ggsave(filename = "/tmp/total_observations.png",g, width = 10, height = 5, dpi = 96, units = "in", device='png')
+plot_with_logo <- add_logo(
+  plot_path = "/tmp/total_observations.png", 
+  logo_path =  logopath,
+  logo_position = "bottom left", 
+  logo_scale = 17
+)
+magick::image_write(plot_with_logo, paste0(imagedir,"/images/blog/exercice-etude-incivilite-urbaine/total_observations.png")) 
+
+# Zoomed
+ggsave(filename = "/tmp/total_observations_zoom.png",g, width = 20, height = 10, dpi = 96, units = "in", device='png')
+plot_with_logo <- add_logo(
+  plot_path = "/tmp/total_observations_zoom.png", 
+  logo_path =  logopath,
+  logo_position = "bottom left", 
+  logo_scale = 17
+)
+magick::image_write(plot_with_logo, paste0(imagedir,"/images/blog/exercice-etude-incivilite-urbaine/total_observations_zoom.png")) 
+
+
+```
+
+[![categories](/images/blog/exercice-etude-incivilite-urbaine/instance_creation.png)](/images/blog/exercice-etude-incivilite-urbaine/instance_creation_zoom.png)
+
+[![categories](/images/blog/exercice-etude-incivilite-urbaine/total_observations.png)](/images/blog/exercice-etude-incivilite-urbaine/total_observations_zoom.png)
+
+
+``` {r echo=FALSE, message=FALSE, include=TRUE}
+
+instanceinfo %>%
+  select(
+    Instance = instancename,
+    "Nb villes" = nbvilles,
+    "Nb observations" = totalobs
+  ) %>%
+  arrange(Instance) %>%  
+  kable() %>%
+  #column_spec(4, background = "#d5d5d5", bold=TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))  
+
+```
+
+
+### Répartitions des catégories
+
+
+
+``` {r echo=FALSE, message=FALSE, include=FALSE}
+# Plot
+title <- "Les observations Vigilo"
+subtitle <- paste("Répartition des categories au niveau national au",textlastdate)
+#pal <- colour("sunset")(nlevels(topcategory$catname)) 
+pal <- paletteer_d("ggsci::nrc_npg",n=nlevels(topcategory$catname),direction=-1,type="discrete")
+g <- topcategory %>%
+  mutate(
+    percenttxt = percent(percent,0.1),
+    poslabel = cumsum(percent) - (percent*.5)
+  ) %>%
+  ggplot(aes(x="", y=percent, fill=catname)) +
+    geom_bar(stat="identity", width=1, color="white") +
+    coord_polar("y", start=0) +
+  geom_label_repel(aes(y = poslabel, label = percenttxt), color = "#141622", segment.color = "#FFFFFF80", nudge_x = 1,show.legend = FALSE) +
+  labs(x = "",
+       y = "% par catégorie",
+       title = title, 
+       subtitle = subtitle,
+       caption = paste0("regardons ailleurs | Data: ",sourcedata),
+       colour = "Couleur") +
+  scale_fill_manual(name = "Difficulté rencontrée", values = pal) +
+  guides(fill = guide_legend(reverse = TRUE)) +
+
+  theme_minimal() +
+  theme(
+        plot.background = element_rect(
+          fill = "#141622",
+          colour="#141622"
+        ),
+        panel.background = element_rect(
+          fill = "#141622", 
+          colour = "#141622",
+          size = 2, 
+          linetype = "solid"
+        ),
+        plot.title = element_text(
+          face = "bold", 
+          colour = "white", 
+          size = 18, 
+          family = "Century Gothic"
+        ),
+        plot.subtitle = element_text(
+          colour = "gray", 
+          family = "URWGeometricW03-Light", 
+          size = 14
+        ),
+        panel.grid  = element_blank(), 
+        axis.title.x = element_text(
+          size = 13, 
+          face = "bold", 
+          colour = "white", 
+          family = "Century Gothic"
+        ),
+        axis.title.y = element_text(
+          size = 13, 
+          face = "bold", 
+          colour = "white", 
+          family = "Century Gothic"
+        ),
+        plot.caption = element_text(
+          colour = "gray", 
+          family = "URWGeometricW03-Light", 
+          size = 14
+        ),
+        plot.caption.position = "plot",
+        legend.position = "right",
+        legend.title = element_text(
+          colour = "white", 
+          family = "URWGeometricW03-Light", 
+          size = 14
+        ),
+        legend.text = element_text(
+          colour = "white", 
+          family = "URWGeometricW03-Light", 
+          size = 10
+          )
+  )
+
+
+
+# Normal
+ggsave(filename = "/tmp/repartition_categories.png",g, width = 10, height = 5, dpi = 96, units = "in", device='png')
+plot_with_logo <- add_logo(
+  plot_path = "/tmp/repartition_categories.png", 
+  logo_path =  logopath,
+  logo_position = "bottom left", 
+  logo_scale = 17
+)
+magick::image_write(plot_with_logo, paste0(imagedir,"/images/blog/exercice-etude-incivilite-urbaine/repartition_categories.png")) 
+
+# Zoomed
+ggsave(filename = "/tmp/repartition_categories_zoom.png",g, width = 20, height = 10, dpi = 96, units = "in", device='png')
+plot_with_logo <- add_logo(
+  plot_path = "/tmp/repartition_categories_zoom.png", 
+  logo_path =  logopath,
+  logo_position = "bottom left", 
+  logo_scale = 17
+)
+magick::image_write(plot_with_logo, paste0(imagedir,"/images/blog/exercice-etude-incivilite-urbaine/repartition_categories_zoom.png")) 
+
+```
+
+Au niveau national, sur **`r nrow(filteredobs)`** observations, nous observons que c'est la catégorie **"`r topcategory$catname[1]`"** qui arrive en tête avec **`r percent(topcategory$percent[1],0.1)`**
+
+[![categories](/images/blog/exercice-etude-incivilite-urbaine/repartition_categories.png)](/images/blog/exercice-etude-incivilite-urbaine/repartition_categories_zoom.png)
+
+
+``` {r echo=FALSE, message=FALSE, include=TRUE}
+
+topcategory %>%
+  mutate (
+    `#`= row_number(),
+    percent=percent(percent,0.1)
+  ) %>%
+  relocate(`#`,.before=catname) %>%
+  rename(
+    "Categorie" = catname,
+    "Nb observations" = nb,
+    "Pourcentage" = percent
+  ) %>%
+  kable() %>%
+  #column_spec(4, background = "#d5d5d5", bold=TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))  
+
+```
+
+
+### Palmares des villes avec le plus fort taux d'incivilité urbaine
+
+``` {r echo=FALSE, message=FALSE, include=FALSE}
+
+instancetopincivilite <- filteredobs %>%
+  mutate(
+    instancename = fct_lump_min(instancename,other_level="[ Autres instances ]",min=minobs),
+    instancename = fct_relevel(instancename, "[ Autres instances ]", after=Inf)
+  ) %>%
+  group_by(instancename, catname) %>%
+  summarise(
+    nb = n()
+  ) %>%
+  inner_join(instanceinfo) %>%
+  # add percent column
+  mutate(
+    percent = nb / totalobs,
+  ) %>%
+  # Remove nb before pivot_wider to prevent duplicate rows
+  select(-nb) %>%
+  pivot_wider(names_from = catname, values_from = percent) %>%
+  mutate(
+    totalincivilite = `Véhicule ou objet gênant` + `Incivilité récurrente sur la route`,
+    totalpourcentage = totalincivilite / totalobs,
+  ) %>%
+  replace(is.na(.), 0) %>%
+  ungroup() %>% 
+  arrange(desc(totalincivilite)) %>%
+  mutate(
+    `#` = row_number(),
+    totalincivilite = percent(totalincivilite,0.01),
+    instancename = fct_reorder(instancename,totalincivilite,min)
+  ) %>%
+  select(instancename,  totalincivilite) 
+
+# Plot
+title <- "Les observations Vigilo"
+subtitle <- paste("Répartition pour chaque ville au",textlastdate)
+pal <- paletteer_d("ggsci::nrc_npg",n=nlevels(topcategory$catname),direction=-1,type="discrete")
+g <- filteredobs %>%
+  mutate(
+    instancename = fct_lump_min(instancename,other_level="[ Autres instances ]",min=minobs),
+    instancename = factor(instancename, levels = rev(instancetopincivilite$instancename)),
+    catname =  fct_lump(catname,other_level="[ Autre ]",prop=minpercentcat),
+    catname = factor(catname, levels = rev(topcategory$catname))
+
+  ) %>%
+  group_by(instancename, catname) %>%
+  summarise(
+    nb = n()
+  ) %>%
+  inner_join(instanceinfo) %>%
+  # add percent column
+  mutate(
+    percent = nb / totalobs,
+#    catname =  fct_lump(catname,other_level="[ Autre ]",prop=minpercentcat),
+  ) %>%
+  select(instancename,catname, percent) %>%
+  ggplot( aes(x=instancename, y=percent,fill=catname)) +
+  geom_col() +
+  coord_flip() +
+  geom_fit_text(aes(label = paste0(round(percent*100,1),"%")), position = position_stack(0.5), color = "white",show_guide = FALSE) +
+  labs(x = "",
+       y = "% par catégorie",
+       title = title, 
+       subtitle = subtitle,
+       caption = paste0("regardons ailleurs | Data: ",sourcedata),
+       colour = "Couleur") +
+  scale_fill_manual(name = "Difficulté rencontrée", values = pal) +
+  guides(fill = guide_legend(reverse = TRUE)) +
+  theme_minimal() +
+  theme(
+        legend.position = "right", 
+        panel.grid.minor = element_blank(),
+        plot.background = element_rect(fill = "#141622"),
+        panel.background = element_rect(fill = "#141622", 
+                                        colour = "#141622",
+                                        size = 2, 
+                                        linetype = "solid"),
+        panel.grid.major = element_line(size = 0.5, 
+                                        linetype = 'solid',
+                                        colour = "gray40"),
+        axis.title.x = element_text(size = 13, 
+                                    face = "bold", 
+                                    colour = "white", 
+                                    family = "Century Gothic"),
+        axis.title.y = element_text(size = 13, 
+                                    face = "bold", 
+                                    colour = "white", 
+                                    family = "Century Gothic"),
+        axis.text.x = element_text(colour = "white"),
+        axis.text.y = element_text(
+                                    size = 12,
+                                    colour = "white"),
+        plot.title = element_text(face = "bold", 
+                                  colour = "white", 
+                                  size = 18, 
+                                  family = "Century Gothic"),
+        plot.subtitle = element_text(colour = "gray", 
+                                     family = "URWGeometricW03-Light", 
+                                     size = 14),
+        plot.caption = element_text(colour = "gray", 
+                                    family = "URWGeometricW03-Light", 
+                                    size = 14),
+        plot.caption.position = "plot",
+        legend.title = element_text(colour = "white", 
+                                    family = "URWGeometricW03-Light", 
+                                    size = 14),
+        legend.text = element_text(colour = "white", 
+                                   family = "URWGeometricW03-Light", 
+                                   size = 10))
+
+ggsave(filename = "/tmp/percent_summary.png",g, width = 10, height = 5, dpi = 96, units = "in", device='png')
+plot_with_logo <- add_logo(
+  plot_path = "/tmp/percent_summary.png", 
+  logo_path =  logopath,
+  logo_position = "bottom left", 
+  logo_scale = 17
+)
+magick::image_write(plot_with_logo, paste0(imagedir,"/images/blog/exercice-etude-incivilite-urbaine/percent_summary.png")) 
+
+
+ggsave(filename = "/tmp/percent_summary_zoom.png",g, width = 20, height = 10, dpi = 96, units = "in", device='png')
+plot_with_logo <- add_logo(
+  plot_path = "/tmp/percent_summary_zoom.png", 
+  logo_path =  logopath,
+  logo_position = "bottom left", 
+  logo_scale = 17
+)
+magick::image_write(plot_with_logo, paste0(imagedir,"/images/blog/exercice-etude-incivilite-urbaine/percent_summary_zoom.png")) 
+```
+
+[![pourcentage categorie](/images/blog/exercice-etude-incivilite-urbaine/percent_summary.png)](/images/blog/exercice-etude-incivilite-urbaine/percent_summary_zoom.png)
+
+
+``` {r echo=FALSE, message=FALSE, include=FALSE}
+
+palmares <- filteredobs %>%
+  mutate(
+    instancename = fct_lump_min(instancename,other_level="[ Autres instances ]",min=minobs),
+    instancename = fct_relevel(instancename, "[ Autres instances ]", after=Inf)
+  ) %>%
+  group_by(instancename, catname) %>%
+  summarise(
+    nb = n()
+  ) %>%
+  inner_join(instanceinfo) %>%
+  # add percent column
+  mutate(
+    instancename=factor(instancename, levels = rev(instanceinfo$instancename)),
+    percent = nb / totalobs,
+  ) %>%
+  # Remove nb before pivot_wider to prevent duplicate rows
+  select(-nb) %>%
+  pivot_wider(names_from = catname, values_from = percent) %>%
+  mutate(
+    totalincivilite = `Véhicule ou objet gênant` + `Incivilité récurrente sur la route`,
+    totalpourcentage = totalincivilite / totalobs,
+  ) %>%
+  replace(is.na(.), 0) %>%
+  ungroup() %>% 
+  arrange(desc(totalincivilite)) %>%
+  mutate(
+    `#` = row_number(),
+    totalincivilite = percent(totalincivilite,0.01),
+    `Véhicule ou objet gênant` = percent(`Véhicule ou objet gênant`,0.01),
+    `Incivilité récurrente sur la route` = percent(`Incivilité récurrente sur la route`,0.01),
+  ) %>%
+  select(`#`, instancename, c(
+    "Instance" = instancename,
+    "Véhicule ou objet gênant",
+    "Incivilité récurrente sur la route",
+    "Total incivilités" = totalincivilite, 
+    "Total Obs" = totalobs))
+ 
+```
+
+``` {r echo=FALSE, message=FALSE, include=TRUE}
+
+# Output html result
+palmares %>%
+  kable() %>%
+  column_spec(5:6, background = "#e5e5e5", bold=TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+``` {r echo=FALSE, message=FALSE, include=FALSE}
+
+# Draw image
+palmares %>%
+  kable("latex", booktabs = TRUE, linesep = "") %>%
+  row_spec(0, angle = 90, bold = TRUE) %>%
+  column_spec(5:6, background = "#d5d5d5", bold=TRUE) %>%
+  save_kable(file="/tmp/palmares_incivilite.png",width=6)
+
+plot_with_logo <- add_logo(
+  plot_path = "/tmp/palmares_incivilite.png", 
+  logo_path =  logopath,
+  logo_position = "top left", 
+  logo_scale = 17
+)
+
+magick::image_write(plot_with_logo, paste0(imagedir,"/images/blog/exercice-etude-incivilite-urbaine/palmares_incivilite.png")) 
+
+```
+
+[Visualiser le tableau en grand format](/images/blog/exercice-etude-incivilite-urbaine/palmares_incivilite.png)
+
+

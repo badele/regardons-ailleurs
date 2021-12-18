@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20, custom)"
+   sodipodi:docname="logo-2.svg"
+   inkscape:export-filename="/home/badele/private/projects/regardons-ailleurs/sources/logo-2.png"
+   inkscape:export-xdpi="64.337082"
+   inkscape:export-ydpi="64.337082"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.38529391"
+     inkscape:cx="40.229029"
+     inkscape:cy="730.61108"
+     inkscape:window-width="1878"
+     inkscape:window-height="998"
+     inkscape:window-x="20"
+     inkscape:window-y="40"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible;"
+       id="Arrow1Lend"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow1Lend"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.8) rotate(180) translate(12.5,0)"
+         style="fill-rule:evenodd;fill:context-stroke;stroke:context-stroke;stroke-width:1.0pt;"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         id="path21941" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <circle
+       style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:3.48589;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path12296-9"
+       cx="1.6678878"
+       cy="181.99776"
+       r="137.21559"
+       transform="matrix(-0.81135555,0.58455297,0.58455297,0.81135555,0,0)" />
+    <circle
+       style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:2.73005;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path12296"
+       cx="-134.01418"
+       cy="-123.15097"
+       r="107.46325"
+       transform="rotate(-167.82749)" />
+    <circle
+       style="fill:#ffffff;fill-opacity:1;stroke:#1ba3c6;stroke-width:6.97017;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path1072"
+       cx="105.03407"
+       cy="148.63985"
+       r="154.43318" />
+    <circle
+       style="fill:none;fill-opacity:1;stroke:#1ba3c6;stroke-width:2.3023;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path1072-7"
+       cx="126.35562"
+       cy="130.99701"
+       r="143.94812"
+       transform="rotate(8.7204215)" />
+    <circle
+       style="fill:#1ba3c6;fill-opacity:1;stroke:#1ba3c6;stroke-width:2.58032;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path1393"
+       cx="105.03407"
+       cy="148.63985"
+       r="94.876404" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:45.1556px;line-height:1.25;font-family:Quattrocento;-inkscape-font-specification:'Quattrocento, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#1ba3c6;fill-opacity:1;stroke:none;stroke-width:0.264583;letter-spacing:2.64583px"
+       id="text9234"
+       transform="rotate(-1.3355777,107.02272,58.427092)"><textPath
+         xlink:href="#path12296"
+         id="textPath12642">REGARDONS</textPath></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:bold;font-size:45.1556px;line-height:1.25;font-family:Quattrocento;fill:#1ba3c6;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Quattrocento, Bold';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:5.29166667px"
+       id="text15469"><textPath
+         xlink:href="#path12296-9"
+         id="textPath16189">AILLEURS</textPath></text>
+    <g
+       id="g22567"
+       transform="matrix(0.2713876,0,0,0.2713876,37.848031,137.18571)"
+       style="fill:#ffffff">
+      <g
+         id="g22565"
+         style="fill:#ffffff">
+        <path
+           d="M 384,0 C 316.809,0 284.091,45.528 256,45.528 227.909,45.528 195.191,0 128,0 57.307,0 0,57.307 0,128 c 0,70.693 57.307,128 128,128 67.191,0 99.909,-45.528 128,-45.528 28.091,0 60.809,45.528 128,45.528 70.693,0 128,-57.307 128,-128 C 512,57.307 454.693,0 384,0 Z M 128,156.621 c -25.4,0 -48.228,-11.173 -64,-28.939 15.772,-17.766 38.6,-28.939 64,-28.939 25.4,0 48.228,11.173 64,28.939 -15.772,17.767 -38.6,28.939 -64,28.939 z m 256,0.636 c -25.679,0 -48.758,-11.295 -64.703,-29.257 15.945,-17.962 39.024,-29.257 64.703,-29.257 25.679,0 48.758,11.295 64.703,29.257 -15.945,17.962 -39.024,29.257 -64.703,29.257 z"
+           id="path22563"
+           style="fill:#ffffff" />
+      </g>
+    </g>
+    <g
+       id="g22569"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22571"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22573"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22575"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22577"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22579"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22581"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22583"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22585"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22587"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22589"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22591"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22593"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22595"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+    <g
+       id="g22597"
+       transform="matrix(0.26458333,0,0,0.26458333,-199.57557,-67.41545)" />
+  </g>
+</svg>
