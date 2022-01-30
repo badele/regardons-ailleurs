@@ -1,5 +1,5 @@
 ---
-title: "Les données de 60 000 reportages des JTs de 20H de France et TF1"
+title: "Les données de 60 000 reportages des JTs de 20H de France 2 et TF1"
 author: "Paul Leclercq"
 date: 2022-01-28T08:50:07+02:00
 description: "Les JT sont un lieu stratégique d'observation du débat public, analysez les"
