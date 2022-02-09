@@ -1,6 +1,7 @@
 /resources/_gen/
 /inprogress/
 .hugo_build.lock
+.cache
 
 # R
 renv

@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
   library(here)
   library(units)
   library(magick)
-library(R.cache)
+  library(R.cache)
   library(osmdata)
   library(ggplot2)
   library(tidyverse) 
@@ -19,7 +19,7 @@ library(R.cache)
 #library(ggmap)
 library(ggspatial)
 
-options(error=traceback) 
+#options(error=traceback) 
 
 # Function
 get_density <- function(x, y, ...) {
@@ -61,34 +61,42 @@ citiesconverter <-list(
 )
 
 # Filtre les observations
-filteredobs <- evalWithMemoization({
-  obs %>%
+filteredobs <- obs %>%
   inner_join(categories) %>%
   mutate(
     year = lubridate::year(datetime), 
     month = lubridate::month(datetime), 
     day = lubridate::day(datetime)
   ) %>%
-  filter(year>=2020, catname == 'Véhicule ou objet gênant', approved == 1) %>%
+  filter(year>=2020, approved == 1) %>%
+  group_by(cityname) %>%
   mutate(
-    across(c(scope, cityname, catname),as.factor),
-    datetime = as_date(datetime)
+    total = n()
   ) 
-})
+
+# print(filteredobs)
+# write.csv(filteredobs,'/tmp/test.csv')
+# stop("oo")
 
 
 topcities <- filteredobs %>%
   inner_join(instances) %>%
+  filter(catname == 'Véhicule ou objet gênant') %>%
   group_by(cityname,country) %>%
   summarise(
     minlat = min(coordinates_lat),
     maxlat = max(coordinates_lat),
     minlon = min(coordinates_lon),
     maxlon = max(coordinates_lon),
-    nb = n()
+    nb = n(),
+    total = max(total)
   ) %>%
-  arrange(desc(nb)) %>%
-  head(15)
+  filter(nb>=100) %>%
+  mutate (
+    percent = round(nb/total,2)
+  ) %>%
+  arrange(desc(percent))
+
 
 MINOBS = 30
 set_overpass_url("https://maps.mail.ru/osm/tools/overpass/api/interpreter")
